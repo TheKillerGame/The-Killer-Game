@@ -26,9 +26,10 @@ chrome, which keeps the address bar out of the way while the phone goes round.
 - The reveal screen is **identical** for killer and innocent — same colours, same
   label, only the words differ, so an onlooker learns nothing
 - Settings are remembered between sessions
-- **542 words** across animals, food, nature, objects, jobs, places, countries and
-  more, each with a deliberately-vague hint so the killer can't reverse-engineer
-  the word
+- **1042 words** across animals, insects, sea life, birds, myth, food, fruit,
+  nature, space, household, tools, tech, jobs, sports, music, transport, places,
+  clothing, materials, feelings, holidays, toys and countries — each with a
+  deliberately-vague hint so the killer can't reverse-engineer the word
 - Works with a mouse, a touchscreen, or the keyboard (Tab to the circle, hold
   Space or Enter)
 
