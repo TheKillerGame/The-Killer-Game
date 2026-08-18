@@ -2,6 +2,8 @@
 
 A local, single-file party game — like *imposter*, but everyone's a suspect.
 
+By **RisingForce** — [GitHub](https://github.com/risingforce1337-afk) · Discord `risingforce1337`
+
 Pass one phone around. Each player **holds** to reveal their secret role:
 
 - **Innocents** all see the same secret **word**.
@@ -43,3 +45,10 @@ by mistake; the counter in the top-right shows how far round the table you are.
 `node test-logic.js` runs the game logic headlessly (role dealing, the
 players/killers clamps, settings persistence, and word-bank integrity — no
 duplicate words, and no hint that gives its own word away). No dependencies.
+
+## Credits
+
+Game, design, code, art, sound and word bank by **RisingForce**.
+
+- GitHub — <https://github.com/risingforce1337-afk>
+- Discord — `risingforce1337`

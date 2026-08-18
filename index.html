@@ -142,6 +142,22 @@
   .warn{text-align:center;color:var(--mut);font-size:11px;letter-spacing:1px;line-height:1.7;padding:0 6px;}
 
   .center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;}
+
+  /* ---- credits ---- */
+  .crole{display:grid;grid-template-columns:1fr 1fr;gap:11px 18px;
+    margin-top:20px;width:100%;max-width:340px;}
+  .crole span{text-align:right;align-self:center;color:var(--mut);font-size:11px;
+    letter-spacing:2px;font-family:'Akira','Grotesk',sans-serif;}
+  .crole b{text-align:left;align-self:center;color:var(--ink);font-size:13px;
+    letter-spacing:2px;font-weight:800;}
+  .clinks{display:flex;flex-direction:column;gap:10px;margin-top:26px;width:100%;max-width:340px;}
+  /* <a> and <button> share this, so they must be styled from scratch to match */
+  .clink{display:block;width:100%;text-align:center;text-decoration:none;
+    background:#140d10;border:1px solid var(--line);border-radius:12px;
+    color:var(--mut);font-size:11px;letter-spacing:2px;padding:14px 10px;
+    font-family:inherit;cursor:pointer;transition:color .15s,border-color .15s;}
+  .clink:hover,.clink:active{color:var(--ink);border-color:var(--red);}
+  .clink.done{color:var(--red2);border-color:var(--red2);}
   /* bigger text on desktop */
   @media (min-width:900px){
     #app{max-width:1200px;max-height:1500px}
@@ -158,6 +174,11 @@
     button{font-size:24px}
     .startbtn,.setbtn,.creditsbtn{max-width:620px}
     .newbtn,.hidebtn{max-width:580px}
+    .crole{max-width:620px;gap:14px 28px}
+    .crole span{font-size:18px}
+    .crole b{font-size:22px}
+    .clinks{max-width:620px}
+    .clink{font-size:16px;padding:18px 12px}
   }
   /* phone: fit the full width so the KILLER text isn't cropped */
   @media (max-width:700px){
@@ -205,7 +226,21 @@
   <div class="screen" id="s-credits">
     <div class="center">
       <div class="logo" style="font-size:30px;letter-spacing:6px">CREDITS</div>
-      <div class="tag" style="line-height:2;margin-top:16px">GAME BY INFERNUS<br>BUILT WITH CLAUDE</div>
+      <div class="crole">
+        <span>GAME</span><b>RISINGFORCE</b>
+        <span>DESIGN</span><b>RISINGFORCE</b>
+        <span>CODE</span><b>RISINGFORCE</b>
+        <span>ART</span><b>RISINGFORCE</b>
+        <span>SOUND</span><b>RISINGFORCE</b>
+        <span>WORDS</span><b>RISINGFORCE</b>
+      </div>
+      <div class="clinks">
+        <a class="clink" href="https://github.com/risingforce1337-afk"
+           target="_blank" rel="noopener noreferrer">GITHUB &nbsp;/&nbsp; RISINGFORCE1337-AFK</a>
+        <!-- Discord usernames aren't linkable without a numeric id, and the page
+             sets user-select:none, so this copies the handle instead -->
+        <button class="clink" id="dcopy" type="button" onclick="copyDiscord()">DISCORD &nbsp;/&nbsp; RISINGFORCE1337</button>
+      </div>
     </div>
     <button class="ghost" onclick="show('s-home')">BACK</button>
   </div>
@@ -579,6 +614,40 @@ function doneReveal(){
   idx++;
   if(idx>=cfg.players){document.getElementById('startName').textContent='PLAYER '+(starter+1);show('s-start');}
   else gotoPass();
+}
+
+/* Copy the Discord handle. The async Clipboard API needs a secure context, so
+   it silently fails on file:// — fall back to a throwaway textarea + execCommand
+   so this still works when the file is opened straight off disk. */
+function copyDiscord(){
+  const el=document.getElementById('dcopy');
+  const tag='risingforce1337';
+  const base='DISCORD &nbsp;/&nbsp; RISINGFORCE1337';
+  let reset=null;
+  const flash=(msg,good)=>{
+    el.innerHTML=msg;
+    el.classList.toggle('done',good);
+    if(reset)clearTimeout(reset);
+    reset=setTimeout(()=>{el.innerHTML=base;el.classList.remove('done');},1600);
+  };
+  const legacy=()=>{
+    try{
+      const ta=document.createElement('textarea');
+      ta.value=tag;ta.setAttribute('readonly','');
+      ta.style.cssText='position:fixed;top:0;left:0;opacity:0;';
+      document.body.appendChild(ta);
+      ta.select();ta.setSelectionRange(0,tag.length);
+      const ok=document.execCommand('copy');
+      document.body.removeChild(ta);
+      flash(ok?'COPIED &nbsp;/&nbsp; RISINGFORCE1337':base,ok);
+    }catch(e){flash(base,false);}
+  };
+  try{
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(tag)
+        .then(()=>flash('COPIED &nbsp;/&nbsp; RISINGFORCE1337',true),legacy);
+    }else legacy();
+  }catch(e){legacy();}
 }
 
 /* button sound effects. Audio is built on the first real gesture: constructing
