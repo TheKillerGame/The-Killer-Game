@@ -129,11 +129,13 @@
   .peek{text-align:center;color:var(--mut);font-size:11px;letter-spacing:3px;}
 
   /* ---- reveal ----
-     Both roles MUST render identically apart from the words themselves: an
-     onlooker across the table reads colour long before they can read text,
-     so red-vs-green here handed them the killer for free. */
+     The role line is colour-coded by request: KILLER red, INNOCENT green.
+     Be aware colour carries much further than text does, so an onlooker can
+     read the role off the screen from across the table — keep the phone low.
+     The word itself stays white for both, so only the role line tells. */
   .role{text-align:center;letter-spacing:2px;font-size:18px;font-weight:700;margin-bottom:10px;color:var(--ink);font-family:'Akira','Grotesk',sans-serif;}
-  .role.killer,.role.innocent{color:var(--ink);}
+  .role.killer{color:var(--red2);}
+  .role.innocent{color:#3fbf6b;}
   .word.killer,.word.innocent{color:#fff;}
   .card{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
     margin:14px 0;padding:26px;}
@@ -610,9 +612,17 @@ const BANK=[
 const MIN_PLAYERS=4, MAX_PLAYERS=16;
 const maxKillers=p=>Math.max(1,Math.floor(p/2));
 
-/* The reveal screen must be indistinguishable between roles, so both get the
-   same label. Set to false to go back to "THE WORD" / "THE HINT". */
+/* Both roles get the same label, so the label itself is never a tell.
+   Set to false to go back to "THE WORD" / "THE HINT". */
 const SAME_LABEL_BOTH_ROLES=true;
+const LABEL_KILLER=SAME_LABEL_BOTH_ROLES?'YOUR WORD':'THE HINT';
+const LABEL_INNOCENT=SAME_LABEL_BOTH_ROLES?'YOUR WORD':'THE WORD';
+
+/* Rare chaos rounds, mutually exclusive. Nobody is told one is happening —
+   each player's screen looks exactly like an ordinary round, and the round
+   falls apart out loud instead. */
+const ALL_KILLERS_CHANCE=0.002;    /* 0.2%: everyone is a killer */
+const ALL_INNOCENT_CHANCE=0.001;   /* 0.1%: everyone innocent, all words differ */
 
 let cfg=loadCfg();
 let words=[],idx=0,starter=0,lastWord=null;
@@ -648,23 +658,46 @@ function syncSettings(){
 }
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 
+/* never deal the same secret word twice running — with one phone going round
+   a table, back-to-back repeats are immediately obvious. Bounded, so a
+   degenerate Math.random can never spin in here forever. */
+function pickPair(){
+  let pick=BANK[Math.floor(Math.random()*BANK.length)];
+  for(let i=0;i<20&&BANK.length>1&&pick[0]===lastWord;i++)
+    pick=BANK[Math.floor(Math.random()*BANK.length)];
+  return pick;
+}
+
 function startGame(){
-  /* never deal the same secret word twice running — with one phone going round
-     a table, back-to-back repeats are immediately obvious */
-  let pick;
-  do{pick=BANK[Math.floor(Math.random()*BANK.length)];}while(BANK.length>1&&pick[0]===lastWord);
-  lastWord=pick[0];
-  const [w,h]=pick;
-  const kills=Math.min(cfg.killers,maxKillers(cfg.players));
-  let roles=[];
-  for(let i=0;i<kills;i++)roles.push('killer');
-  while(roles.length<cfg.players)roles.push('innocent');
-  shuffle(roles);
-  const kLabel=SAME_LABEL_BOTH_ROLES?'YOUR WORD':'THE HINT';
-  const iLabel=SAME_LABEL_BOTH_ROLES?'YOUR WORD':'THE WORD';
-  words=roles.map(r=>r==='killer'
-    ?{role:'killer',label:kLabel,word:h}
-    :{role:'innocent',label:iLabel,word:w});
+  /* rolled first, so the mode is decided before any other random draw */
+  const roll=Math.random();
+  const allKillers=roll<ALL_KILLERS_CHANCE;
+  const allInnocent=!allKillers&&roll<ALL_KILLERS_CHANCE+ALL_INNOCENT_CHANCE;
+
+  if(allKillers){
+    /* no innocents at all: everyone gets the same hint and every single
+       player believes they are the lone killer */
+    const [kw,kh]=pickPair();
+    lastWord=kw;
+    words=Array.from({length:cfg.players},()=>({role:'killer',label:LABEL_KILLER,word:kh}));
+  }else if(allInnocent){
+    /* everyone is innocent, but no two share a word, so every honest answer
+       sounds like a bluff to everyone else */
+    const pool=shuffle(BANK.slice()).slice(0,cfg.players);
+    lastWord=pool[0][0];
+    words=pool.map(pr=>({role:'innocent',label:LABEL_INNOCENT,word:pr[0]}));
+  }else{
+    const [w,h]=pickPair();
+    lastWord=w;
+    const kills=Math.min(cfg.killers,maxKillers(cfg.players));
+    let roles=[];
+    for(let i=0;i<kills;i++)roles.push('killer');
+    while(roles.length<cfg.players)roles.push('innocent');
+    shuffle(roles);
+    words=roles.map(r=>r==='killer'
+      ?{role:'killer',label:LABEL_KILLER,word:h}
+      :{role:'innocent',label:LABEL_INNOCENT,word:w});
+  }
   idx=0;starter=Math.floor(Math.random()*cfg.players);
   gotoPass();
 }

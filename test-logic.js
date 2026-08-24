@@ -48,7 +48,7 @@ global.Audio = function () { return { volume: 0, currentTime: 0, play() { return
 
 /* run the game script in this scope */
 const ctx = {};
-const runner = new Function(js + '\n;return {cfg:()=>cfg, chg, startGame, reveal, doneReveal, abortGame, words:()=>words, starter:()=>starter, BANK, MIN_PLAYERS, MAX_PLAYERS, maxKillers, loadCfg};');
+const runner = new Function(js + '\n;return {cfg:()=>cfg, chg, startGame, reveal, doneReveal, abortGame, words:()=>words, starter:()=>starter, BANK, MIN_PLAYERS, MAX_PLAYERS, maxKillers, loadCfg, ALL_KILLERS_CHANCE, ALL_INNOCENT_CHANCE};');
 const G = runner.call(global);
 
 /* ---- assertions ---- */
@@ -59,6 +59,16 @@ const eq = (name, got, want) => {
   console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${ok ? '' : `  got ${JSON.stringify(got)} want ${JSON.stringify(want)}`}`);
 };
 const ok = (name, cond) => eq(name, !!cond, true);
+
+/* startGame's first Math.random call decides the round type, so replacing
+   only that one call pins the mode and leaves everything else random. */
+const withRoll = (v, fn) => {
+  const real = Math.random;
+  let first = true;
+  Math.random = () => { if (first) { first = false; return v; } return real(); };
+  try { return fn(); } finally { Math.random = real; }
+};
+const NORMAL = 0.5;                    // any roll above the chaos thresholds
 
 /* clamping: players */
 for (let i = 0; i < 50; i++) G.chg('players', 1);
@@ -91,12 +101,15 @@ localStorage.setItem('killer.cfg', 'not json at all');
 eq('garbage cfg falls back', G.loadCfg(), { players: 4, killers: 1 });
 
 /* dealing: exactly N killers, all innocents share one word, killers share the hint */
-const deal = (players, killers) => {
+const configure = (players, killers) => {
   while (G.cfg().players > players) G.chg('players', -1);
   while (G.cfg().players < players) G.chg('players', 1);
   while (G.cfg().killers > killers) G.chg('killers', -1);
   while (G.cfg().killers < killers) G.chg('killers', 1);
-  G.startGame();
+};
+const deal = (players, killers) => {
+  configure(players, killers);
+  withRoll(NORMAL, () => G.startGame());
   return G.words();
 };
 for (const [p, k] of [[4, 1], [4, 2], [7, 3], [16, 8], [10, 1]]) {
@@ -114,13 +127,13 @@ for (const [p, k] of [[4, 1], [4, 2], [7, 3], [16, 8], [10, 1]]) {
 
 /* starter index is always a real player */
 let starterBad = 0;
-for (let i = 0; i < 500; i++) { G.startGame(); const s = G.starter(); if (!(s >= 0 && s < G.cfg().players)) starterBad++; }
+for (let i = 0; i < 500; i++) { withRoll(NORMAL, () => G.startGame()); const s = G.starter(); if (!(s >= 0 && s < G.cfg().players)) starterBad++; }
 eq('starter always in range', starterBad, 0);
 
 /* no back-to-back repeat of the secret word */
 let repeats = 0, prev = null;
 for (let i = 0; i < 3000; i++) {
-  G.startGame();
+  withRoll(NORMAL, () => G.startGame());
   const cur = G.words().find(x => x.role === 'innocent').word;
   if (cur === prev) repeats++;
   prev = cur;
@@ -135,7 +148,7 @@ eq('reveals needed for 6 players', revealed, 6);
 ok('ends on start screen', getEl('s-start').classList.contains('on'));
 eq('start screen names a real player', /^PLAYER (1|2|3|4|5|6)$/.test(getEl('startName').textContent), true);
 
-/* reveal renders identically for both roles (no colour tell) */
+/* reveal: role text is colour-coded, but the label must still match */
 deal(4, 1);
 const seen = [];
 for (let i = 0; i < 4; i++) {
@@ -152,6 +165,65 @@ deal(12, 4);
 G.abortGame();
 ok('quit returns home', getEl('s-home').classList.contains('on'));
 eq('quit clears the deal', G.words().length, 0);
+
+/* ---- rare chaos rounds ---- */
+eq('all-killers chance is 0.2%', G.ALL_KILLERS_CHANCE, 0.002);
+eq('all-innocent chance is 0.1%', G.ALL_INNOCENT_CHANCE, 0.001);
+
+/* everyone is a killer */
+configure(6, 2);
+let w = withRoll(0, () => { G.startGame(); return G.words(); });
+eq('[all-killers] every player is a killer', w.filter(x => x.role === 'killer').length, 6);
+eq('[all-killers] no innocents', w.filter(x => x.role === 'innocent').length, 0);
+eq('[all-killers] everyone shares one hint', new Set(w.map(x => x.word)).size, 1);
+eq('[all-killers] ignores the killers setting', w.length, 6);
+ok('[all-killers] label unchanged', new Set(w.map(x => x.label)).size === 1);
+/* and the round still plays through to the end */
+for (let i = 0; i < 6; i++) { G.reveal(); G.doneReveal(); }
+ok('[all-killers] pass loop completes', getEl('s-start').classList.contains('on'));
+
+/* everyone innocent, but all words differ */
+configure(8, 3);
+w = withRoll(G.ALL_KILLERS_CHANCE, () => { G.startGame(); return G.words(); });
+eq('[all-innocent] every player is innocent', w.filter(x => x.role === 'innocent').length, 8);
+eq('[all-innocent] no killers', w.filter(x => x.role === 'killer').length, 0);
+eq('[all-innocent] every word is different', new Set(w.map(x => x.word)).size, 8);
+ok('[all-innocent] words are real bank words',
+   w.every(x => G.BANK.some(b => b[0] === x.word)));
+for (let i = 0; i < 8; i++) { G.reveal(); G.doneReveal(); }
+ok('[all-innocent] pass loop completes', getEl('s-start').classList.contains('on'));
+
+/* the largest table still finds enough distinct words */
+configure(16, 8);
+w = withRoll(G.ALL_KILLERS_CHANCE, () => { G.startGame(); return G.words(); });
+eq('[all-innocent] 16 distinct words at a full table', new Set(w.map(x => x.word)).size, 16);
+
+/* boundaries: the roll picks the mode it should, and normal rounds are normal */
+const modeAt = (roll) => {
+  configure(6, 2);
+  const r = withRoll(roll, () => { G.startGame(); return G.words(); });
+  const k = r.filter(x => x.role === 'killer').length;
+  if (k === r.length) return 'all-killers';
+  if (k === 0) return 'all-innocent';
+  return 'normal';
+};
+eq('roll 0.0000 -> all killers', modeAt(0), 'all-killers');
+eq('roll 0.0019 -> all killers', modeAt(0.0019), 'all-killers');
+eq('roll 0.0020 -> all innocent', modeAt(0.002), 'all-innocent');
+eq('roll 0.0029 -> all innocent', modeAt(0.0029), 'all-innocent');
+eq('roll 0.0030 -> normal', modeAt(0.003), 'normal');
+eq('roll 0.5000 -> normal', modeAt(0.5), 'normal');
+
+/* unstubbed, chaos must stay rare: expect ~0.3% over 200k rounds */
+configure(4, 1);
+let chaos = 0;
+for (let i = 0; i < 200000; i++) {
+  G.startGame();
+  const k = G.words().filter(x => x.role === 'killer').length;
+  if (k === 0 || k === G.words().length) chaos++;
+}
+const rate = chaos / 200000;
+ok(`chaos rate ${(rate * 100).toFixed(3)}% is near 0.3%`, rate > 0.0015 && rate < 0.0050);
 
 /* word bank integrity */
 const bank = G.BANK;

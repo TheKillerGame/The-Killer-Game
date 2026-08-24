@@ -23,8 +23,16 @@ chrome, which keeps the address bar out of the way while the phone goes round.
 
 - 4–16 players, 1 to half-the-table killers
 - Fast hold-to-reveal with a charge ring and a haptic buzz
-- The reveal screen is **identical** for killer and innocent — same colours, same
-  label, only the words differ, so an onlooker learns nothing
+- The reveal screen colour-codes the role: **KILLER** in red, **INNOCENT** in
+  green. The label and the word are styled the same either way, so only that one
+  line differs — but colour reads from further off than text does, so hold the
+  phone low when you look
+- **Rare chaos rounds.** Nothing on screen announces them; each player's phone
+  looks like a completely ordinary round and it only falls apart out loud:
+  - **0.2%** — *everyone* is a killer. No innocents at all, everyone gets the
+    same vague hint, and every single player thinks they're the only one bluffing.
+  - **0.1%** — everyone is innocent, but **no two players share a word**. Every
+    answer is honest and every answer sounds like a bluff.
 - Settings are remembered between sessions
 - **1042 words** across animals, insects, sea life, birds, myth, food, fruit,
   nature, space, household, tools, tech, jobs, sports, music, transport, places,
