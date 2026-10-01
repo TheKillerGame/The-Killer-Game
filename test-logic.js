@@ -48,7 +48,7 @@ global.Audio = function () { return { volume: 0, currentTime: 0, play() { return
 
 /* run the game script in this scope */
 const ctx = {};
-const runner = new Function(js + '\n;return {cfg:()=>cfg, chg, startGame, reveal, doneReveal, abortGame, words:()=>words, starter:()=>starter, BANK, MIN_PLAYERS, MAX_PLAYERS, maxKillers, loadCfg, ALL_KILLERS_CHANCE, ALL_INNOCENT_CHANCE};');
+const runner = new Function(js + '\n;return {cfg:()=>cfg, chg, startGame, reveal, doneReveal, abortGame, words:()=>words, starter:()=>starter, BANK, MIN_PLAYERS, MAX_PLAYERS, maxKillers, loadCfg, ALL_KILLERS_CHANCE, ALL_INNOCENT_CHANCE, resetSeen:()=>{seen=new Set();lastWord=null;}, reloadSeen:()=>{seen=loadSeen();}};');
 const G = runner.call(global);
 
 /* ---- assertions ---- */
@@ -139,6 +139,40 @@ for (let i = 0; i < 3000; i++) {
   prev = cur;
 }
 eq('no consecutive duplicate words in 3000 deals', repeats, 0);
+
+/* no word comes back until the whole bank has been dealt */
+const secret = () => G.words().find(x => x.role === 'innocent').word;
+G.resetSeen();
+const cycle = [];
+for (let i = 0; i < G.BANK.length; i++) { withRoll(NORMAL, () => G.startGame()); cycle.push(secret()); }
+eq('a full cycle deals every word exactly once', new Set(cycle).size, G.BANK.length);
+withRoll(NORMAL, () => G.startGame());
+ok('the cycle restarts once the bank is used up', G.BANK.some(b => b[0] === secret()));
+ok('the restart never repeats the last word back-to-back', secret() !== cycle[cycle.length - 1]);
+
+/* the played words survive a reload, so closing the game never resets them */
+G.resetSeen();
+const before = [];
+for (let i = 0; i < 50; i++) { withRoll(NORMAL, () => G.startGame()); before.push(secret()); }
+eq('played words are saved to localStorage', JSON.parse(localStorage.getItem('killer.seen')).length, 50);
+G.reloadSeen();
+const after = [];
+for (let i = 0; i < 500; i++) { withRoll(NORMAL, () => G.startGame()); after.push(secret()); }
+eq('no saved word is dealt again after a reload', after.filter(x => before.includes(x)).length, 0);
+localStorage.setItem('killer.seen', 'not json at all');
+G.reloadSeen();
+withRoll(NORMAL, () => G.startGame());
+ok('corrupt saved words fall back to a fresh cycle', G.BANK.some(b => b[0] === secret()));
+
+/* chaos rounds draw from the same cycle */
+G.resetSeen();
+configure(16, 8);
+const played = new Set();
+for (let i = 0; i < 40; i++) {
+  withRoll(G.ALL_KILLERS_CHANCE, () => G.startGame());
+  G.words().forEach(x => played.add(x.word));
+}
+eq('[all-innocent] 40 rounds at 16 players never repeat a word', played.size, 640);
 
 /* full pass loop reaches the start screen after exactly N reveals */
 deal(6, 2);

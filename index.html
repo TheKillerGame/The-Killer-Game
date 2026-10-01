@@ -445,7 +445,7 @@ const BANK=[
   ["GHANA","golden"],["VIETNAM","humid"],["INDONESIA","sprawling"],["PHILIPPINES","scattered"],
   ["KOREA","trendy"],["ISRAEL","historic"],["GREENLAND","glacial"],["SCOTLAND","misty"],
   ["WALES","rugged"],["AUSTRIA","alpine"],["BELGIUM","understated"],["HUNGARY","landlocked"],
-  ["UKRAINE","fertile"],
+  ["UKRAINE","fertile"],
   /* ===================== expansion pack ===================== */
   /* --- bugs & creepy-crawlies --- */
   ["MOTH","drawn"],["BEETLE","armored"],["LADYBUG","dotted"],["GRASSHOPPER","springy"],
@@ -827,13 +827,32 @@ function syncSettings(){
 }
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 
-/* never deal the same secret word twice running — with one phone going round
-   a table, back-to-back repeats are immediately obvious. Bounded, so a
-   degenerate Math.random can never spin in here forever. */
-function pickPair(){
-  let pick=BANK[Math.floor(Math.random()*BANK.length)];
-  for(let i=0;i<20&&BANK.length>1&&pick[0]===lastWord;i++)
-    pick=BANK[Math.floor(Math.random()*BANK.length)];
+/* no word is ever dealt again until every word in the bank has been dealt.
+   The words already played are saved on the phone, so this holds across
+   rounds, reloads and days. Stored by word rather than index, so editing the
+   bank never scrambles it. When the bank is used up it starts over, still
+   skipping the word just played so the cycle boundary can't repeat it
+   back-to-back. */
+const SEEN_KEY='killer.seen';
+let seen=loadSeen();
+function loadSeen(){
+  try{
+    const s=JSON.parse(localStorage.getItem(SEEN_KEY)||'[]');
+    return new Set(Array.isArray(s)?s:[]);
+  }catch(e){return new Set();}
+}
+function saveSeen(){try{localStorage.setItem(SEEN_KEY,JSON.stringify([...seen]));}catch(e){}}
+/* `round` holds words already dealt this round, so the all-innocent round
+   never hands two players the same word even across a cycle restart */
+function pickPair(round=new Set()){
+  let left=BANK.filter(p=>!seen.has(p[0])&&!round.has(p[0]));
+  if(!left.length){
+    seen=new Set(round);
+    if(lastWord)seen.add(lastWord);
+    left=BANK.filter(p=>!seen.has(p[0]));
+  }
+  const pick=left[Math.floor(Math.random()*left.length)];
+  seen.add(pick[0]);round.add(pick[0]);
   return pick;
 }
 
@@ -852,7 +871,8 @@ function startGame(){
   }else if(allInnocent){
     /* everyone is innocent, but no two share a word, so every honest answer
        sounds like a bluff to everyone else */
-    const pool=shuffle(BANK.slice()).slice(0,cfg.players);
+    const round=new Set();
+    const pool=Array.from({length:cfg.players},()=>pickPair(round));
     lastWord=pool[0][0];
     words=pool.map(pr=>({role:'innocent',label:LABEL_INNOCENT,word:pr[0]}));
   }else{
@@ -867,6 +887,7 @@ function startGame(){
       ?{role:'killer',label:LABEL_KILLER,word:h}
       :{role:'innocent',label:LABEL_INNOCENT,word:w});
   }
+  saveSeen();
   idx=0;starter=Math.floor(Math.random()*cfg.players);
   gotoPass();
 }
