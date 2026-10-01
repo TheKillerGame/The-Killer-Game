@@ -227,7 +227,7 @@ ok(`chaos rate ${(rate * 100).toFixed(3)}% is near 0.3%`, rate > 0.0015 && rate 
 
 /* word bank integrity */
 const bank = G.BANK;
-eq('bank size', bank.length, 1042);
+eq('bank size', bank.length, 1500);
 eq('no duplicate words', bank.length - new Set(bank.map(b => b[0])).size, 0);
 eq('no hint leaking its word', bank.filter(([w, h]) => w.includes(h.toUpperCase()) || h.toUpperCase().includes(w)).length, 0);
 eq('every entry is [word,hint]', bank.filter(b => b.length !== 2 || !b[0] || !b[1]).length, 0);

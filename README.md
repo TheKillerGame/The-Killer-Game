@@ -34,7 +34,7 @@ chrome, which keeps the address bar out of the way while the phone goes round.
   - **0.1%** — everyone is innocent, but **no two players share a word**. Every
     answer is honest and every answer sounds like a bluff.
 - Settings are remembered between sessions
-- **1042 words** across animals, insects, sea life, birds, myth, food, fruit,
+- **1500 words** across animals, insects, sea life, birds, myth, food, fruit,
   nature, space, household, tools, tech, jobs, sports, music, transport, places,
   clothing, materials, feelings, holidays, toys and countries — each with a
   deliberately-vague hint so the killer can't reverse-engineer the word
