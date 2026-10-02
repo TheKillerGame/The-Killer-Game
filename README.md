@@ -2,7 +2,7 @@
 
 A local, single-file party game — like *imposter*, but everyone's a suspect.
 
-By **RisingForce** — [GitHub](https://github.com/risingforce1337-afk) · Discord `risingforce1337`
+By **RisingForce** — [GitHub](https://github.com/TheKillerGame/The-Killer-Game) · Discord `risingforce1337`
 
 Pass one phone around. Each player **holds** to reveal their secret role:
 
@@ -63,9 +63,10 @@ duplicate words, and no hint that gives its own word away). No dependencies.
 
 ## Credits
 
-Game, design, code, art, sound and word bank by **RisingForce**.
+- Game, design, art and sound: **RisingForce**
+- Code: **RisingForce** and **Infernus**
+- Word bank: **Infernus**
+- Music: *Somewhere in the Elevator* by **Peachtea** and **RisingForce**
 
-Music: *Somewhere in the Elevator* by **Peachtea**.
-
-- GitHub — <https://github.com/risingforce1337-afk>
+- GitHub — <https://github.com/TheKillerGame/The-Killer-Game>
 - Discord — `risingforce1337`
