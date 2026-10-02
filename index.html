@@ -58,8 +58,9 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:4px;}
 
 /* ---- home ---- */
 .logo{font-family:var(--disp);font-size:88px;line-height:1;color:var(--yellow);
-  text-shadow:0 7px 0 var(--deep);transform:rotate(-4deg);margin-top:8vh;}
+  text-shadow:0 7px 0 var(--deep);transform:rotate(-4deg);}
 .tagline{font-size:16px;opacity:.9;margin-top:10px;}
+.menu{width:100%;display:flex;flex-direction:column;align-items:center;margin-top:52px;}
 .foot{font-size:12px;opacity:.6;margin-top:18px;}
 
 /* ---- top bar on the pass screen ---- */
@@ -139,7 +140,8 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:4px;}
   .bubble,.field,.crole,.clinks{max-width:420px;}
 }
 @media (max-height:640px){
-  .logo{margin-top:2vh;font-size:72px;}
+  .logo{font-size:72px;}
+  .menu{margin-top:32px;}
   #hold{width:190px;height:190px;}
 }
 </style>
@@ -149,12 +151,15 @@ button:focus-visible{outline:3px solid var(--yellow);outline-offset:4px;}
 
   <!-- HOME -->
   <div class="screen on" id="s-home">
+    <div class="fill"></div>
     <div class="logo">KILLER!</div>
     <div class="tagline">who's lying? &#x1F52A;</div>
+    <div class="menu">
+      <button class="main" onclick="startGame()">PLAY</button>
+      <button onclick="show('s-settings')">SETTINGS</button>
+      <button onclick="show('s-credits')">CREDITS</button>
+    </div>
     <div class="fill"></div>
-    <button class="main" onclick="startGame()">PLAY</button>
-    <button onclick="show('s-settings')">SETTINGS</button>
-    <button onclick="show('s-credits')">CREDITS</button>
     <div class="foot">1500 words &middot; pass one phone around</div>
   </div>
 
