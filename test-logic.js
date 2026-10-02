@@ -21,6 +21,7 @@ const mkEl = (id) => ({
   addEventListener(t, fn) { (this._handlers[t] = this._handlers[t] || []).push(fn); },
   fire(t, ev = {}) { (this._handlers[t] || []).forEach(fn => fn({ preventDefault() {}, ...ev })); },
   setPointerCapture() {},
+  setAttribute(k, v) { this['_' + k] = String(v); },
 });
 
 const els = {};
@@ -199,6 +200,15 @@ deal(12, 4);
 G.abortGame();
 ok('quit returns home', getEl('s-home').classList.contains('on'));
 eq('quit clears the deal', G.words().length, 0);
+
+/* background music: mute button toggles, and the choice is remembered */
+ok('music is embedded', /^data:audio\/mpeg;base64,/.test(global.window.KMUSIC || ''));
+eq('music starts unmuted', getEl('mute')['_aria-label'], 'Mute music');
+global.window.toggleMusic();
+eq('mute is saved', localStorage.getItem('killer.music'), 'off');
+eq('mute button flips its label', getEl('mute')['_aria-label'], 'Unmute music');
+global.window.toggleMusic();
+eq('unmute is saved', localStorage.getItem('killer.music'), 'on');
 
 /* ---- rare chaos rounds ---- */
 eq('all-killers chance is 0.2%', G.ALL_KILLERS_CHANCE, 0.002);

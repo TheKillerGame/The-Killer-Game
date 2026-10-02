@@ -36,6 +36,9 @@ chrome, which keeps the address bar out of the way while the phone goes round.
 - **No repeat words.** Every word in the bank is dealt once before any word
   comes back, and the phone remembers which ones you have had, so closing
   the game or playing another day never brings an old word back early
+- Background music loops quietly on every screen (it starts on the first tap,
+  because browsers block sound until then); the speaker button on the home
+  screen mutes it, and that choice is remembered
 - Settings are remembered between sessions
 - **1500 words** across animals, insects, sea life, birds, myth, food, fruit,
   nature, space, household, tools, tech, jobs, sports, music, transport, places,
@@ -61,6 +64,8 @@ duplicate words, and no hint that gives its own word away). No dependencies.
 ## Credits
 
 Game, design, code, art, sound and word bank by **RisingForce**.
+
+Music: *Somewhere in the Elevator* by **Peachtea**.
 
 - GitHub — <https://github.com/risingforce1337-afk>
 - Discord — `risingforce1337`
